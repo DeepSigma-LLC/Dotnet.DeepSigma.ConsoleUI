@@ -27,10 +27,12 @@ namespace DeepSigma.ConsoleUI
         public HashSet<char> ValidFlags { get; set; } = [];
 
         /// <summary>
-        /// Represents an action that can be executed from the console with a description.
+        /// Initializes a new instance of the <see cref="ConsoleMethod"/> class.
         /// </summary>
         /// <param name="action"></param>
         /// <param name="description"></param>
+        /// <param name="valid_arguments"></param>
+        /// <param name="valid_flags"></param>
         public ConsoleMethod(Action<HashSet<ArgumentValuePair>, HashSet<char>> action, string description, HashSet<ArgumentValuePair>? valid_arguments = null, HashSet<char>? valid_flags = null)
         {
             this.Description = description;

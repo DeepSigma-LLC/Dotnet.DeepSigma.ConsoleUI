@@ -7,13 +7,25 @@ using DeepSigma.ConsoleUI;
 
 namespace DeepSigma.ConsoleUI
 {
-    public class CLIMethodExecutionSystem
+    /// <summary>
+    /// Responsible for processing command-line arguments and executing corresponding methods.
+    /// </summary>
+    public class CommandExecutionSystem
     {
         private ConsoleMethodCollection ConsoleMethodDefinitions { get; init; }
         private string AppName { get; } = string.Empty;
         private string AppVersion { get; } = string.Empty;
         private string CurrentInstallationDirectory { get; } = string.Empty;
-        public CLIMethodExecutionSystem(ConsoleMethodCollection console_method_definitions, string AppName, string AppVersion, string CurrentInstallationDirectory)
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CommandExecutionSystem"/> class with the specified console method definitions and application details.
+        /// </summary>
+        /// <param name="console_method_definitions"></param>
+        /// <param name="AppName"></param>
+        /// <param name="AppVersion"></param>
+        /// <param name="CurrentInstallationDirectory"></param>
+        /// <exception cref="ArgumentNullException"></exception>
+        public CommandExecutionSystem(ConsoleMethodCollection console_method_definitions, string AppName, string AppVersion, string CurrentInstallationDirectory)
         {
             this.ConsoleMethodDefinitions = console_method_definitions ?? throw new ArgumentNullException(nameof(console_method_definitions), "Console method definitions cannot be null.");
             this.AppName = AppName;
@@ -30,7 +42,7 @@ namespace DeepSigma.ConsoleUI
         /// <returns></returns>
         public void ProcessArguments(string[] arguments)
         {
-            IEnumerable<ConsoleCommand> commands = CLIArgumentParser.ProcessArguments(arguments, ConsoleMethodDefinitions.GetCollection().Keys.ToArray());
+            IEnumerable<ConsoleCommand> commands = CommandLineArgumentParser.ProcessArguments(arguments, ConsoleMethodDefinitions.GetCollection().Keys.ToArray());
             foreach (ConsoleCommand command in commands)
             {
                 InvokeCLIArgument(command);

@@ -14,7 +14,7 @@ namespace DeepSigma.ConsoleUI
         private readonly Dictionary<string, ConsoleMethod> MethodCollection = [];
 
         /// <summary>
-        /// Represents a collection of console methods, allowing for the addition and retrieval of arguments by name.
+        /// Initializes a new instance of the <see cref="ConsoleMethodCollection"/> class.
         /// </summary>
         public ConsoleMethodCollection(){}
 

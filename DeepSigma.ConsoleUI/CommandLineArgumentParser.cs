@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace DeepSigma.ConsoleUI
 {
-    public static class CLIArgumentParser
+    /// <summary>
+    /// Responsible for parsing command-line arguments and organizing them into a structured format.
+    /// </summary>
+    public static class CommandLineArgumentParser
     {
         private static string null_command = "null";
 
