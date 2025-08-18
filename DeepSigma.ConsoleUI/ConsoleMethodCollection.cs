@@ -11,7 +11,7 @@ namespace DeepSigma.ConsoleUI
     /// </summary>
     public class ConsoleMethodCollection
     {
-        private readonly Dictionary<string, ConsoleMethod<dynamic>> MethodCollection = [];
+        private readonly Dictionary<string, ConsoleMethod> MethodCollection = [];
 
         /// <summary>
         /// Represents a collection of console methods, allowing for the addition and retrieval of arguments by name.
@@ -23,7 +23,7 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         /// <param name="command"></param>
         /// <param name="console_method"></param>
-        public void Add(string command, ConsoleMethod<dynamic> console_method)
+        public void Add(string command, ConsoleMethod console_method)
         {
             ValidateCommandName(command);
             ValidateConsoleMethod(console_method);
@@ -34,7 +34,7 @@ namespace DeepSigma.ConsoleUI
         /// Retrieves all console arguments in the collection.
         /// </summary>
         /// <returns></returns>
-        public Dictionary<string, ConsoleMethod<dynamic>> GetCollection()
+        public Dictionary<string, ConsoleMethod> GetCollection()
         {
             return MethodCollection;
         }
@@ -57,7 +57,7 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         /// <param name="argument"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        private void ValidateConsoleMethod(ConsoleMethod<dynamic> argument)
+        private void ValidateConsoleMethod(ConsoleMethod argument)
         {
             if (argument == null)
             {

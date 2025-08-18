@@ -9,33 +9,19 @@ namespace DeepSigma.ConsoleUI
 {
     public class CLIMethodExecutionSystem
     {
-        private ConsoleMethodCollection ConsoleArguments { get; init; }
+        private ConsoleMethodCollection ConsoleMethodDefinitions { get; init; }
         private string AppName { get; } = string.Empty;
         private string AppVersion { get; } = string.Empty;
         private string CurrentInstallationDirectory { get; } = string.Empty;
-        public CLIMethodExecutionSystem(ConsoleMethodCollection consoleArguments, string AppName, string AppVersion, string CurrentInstallationDirectory)
+        public CLIMethodExecutionSystem(ConsoleMethodCollection console_method_definitions, string AppName, string AppVersion, string CurrentInstallationDirectory)
         {
-            this.ConsoleArguments = consoleArguments;
+            this.ConsoleMethodDefinitions = console_method_definitions ?? throw new ArgumentNullException(nameof(console_method_definitions), "Console method definitions cannot be null.");
             this.AppName = AppName;
             this.AppVersion = AppVersion;
             this.CurrentInstallationDirectory = CurrentInstallationDirectory;
             AddArguments();
         }
 
-        /// <summary>
-        /// Generates a info message for the console application.
-        /// </summary>
-        /// <param name="AppVersion"></param>
-        /// <param name="CurrentInstallationDirectory"></param>
-        public void ShowInfo(dynamic parameters)
-        {
-            ConsoleUtilities.Print($"{AppName}", ConsoleColor.Green);
-            Console.WriteLine($"Version: {AppVersion}");
-            Console.WriteLine("Current Directory: " + CurrentInstallationDirectory);
-            Console.WriteLine($"This is a command-line interface for the {AppName} application.");
-            Console.WriteLine("For more information, visit the official documentation.");
-            Environment.Exit(0);
-        }
 
         /// <summary>
         /// Processes the command-line arguments passed to the application.
@@ -44,15 +30,10 @@ namespace DeepSigma.ConsoleUI
         /// <returns></returns>
         public void ProcessArguments(string[] arguments)
         {
-            IEnumerable<ConsoleCommand> args = CLIArgumentParser.ProcessArguments(arguments, ConsoleArguments.GetCollection().Keys.ToArray());
-            foreach (ConsoleCommand arg in args)
+            IEnumerable<ConsoleCommand> commands = CLIArgumentParser.ProcessArguments(arguments, ConsoleMethodDefinitions.GetCollection().Keys.ToArray());
+            foreach (ConsoleCommand command in commands)
             {
-                if (arg.Command == null)
-                {
-                    ConsoleUtilities.Print("Invalid command.", ConsoleColor.Red);
-                    continue;
-                }
-                InvokeCLIArgument(arg);
+                InvokeCLIArgument(command);
             }
         }
 
@@ -63,14 +44,18 @@ namespace DeepSigma.ConsoleUI
         private void InvokeCLIArgument(ConsoleCommand argument)
         {
             string? command = argument.Command;
-            if(command is null || ConsoleArguments.GetCollection().ContainsKey(command))
+            if (command is null)
             {
-                ConsoleUtilities.Print("Invalid argument: " + command, ConsoleColor.Red);
+                throw new NotImplementedException("Unhandled exception: No command provided.");
+            }
+            else if(ConsoleMethodDefinitions.GetCollection().ContainsKey(command) == false)
+            {
+                ConsoleUtilities.Print("Invalid command: " + command, ConsoleColor.Red);
                 return;
             }
 
             command = command.Trim().ToLower();
-            ConsoleArguments.GetCollection()[command].Method.Invoke(argument.Arguments);
+            ConsoleMethodDefinitions.GetCollection()[command].Method.Invoke(argument.Arguments, argument.Flags);
         }
 
         /// <summary>
@@ -78,24 +63,53 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         private void AddArguments()
         {
-            ConsoleArguments.Add("help", new ConsoleMethod<dynamic>(ShowHelp, "Shows all available arguments."));
-            ConsoleArguments.Add("info", new ConsoleMethod<dynamic>(ShowInfo, "Shows app information."));
+            ConsoleMethodDefinitions.Add("help", new ConsoleMethod(ShowHelp, "Shows all available arguments."));
+            ConsoleMethodDefinitions.Add("info", new ConsoleMethod(ShowInfo, "Shows app information."));
         }
 
         /// <summary>
         /// Generates a help message for the console application.
         /// </summary>
         /// <param name="AppName"></param>
-        private void ShowHelp(dynamic parameters)
+        private void ShowHelp(HashSet<ArgumentValuePair> arguments, HashSet<char> flags)
         {
-            string all_arguments = string.Join(" | ", ConsoleArguments.GetCollection().Keys);
-            Console.WriteLine($"Usage: {AppName} [{all_arguments}| No Argument]");
+            string all_commands = string.Join(" | ", ConsoleMethodDefinitions.GetCollection().Keys);
+            Console.WriteLine($"Usage: {AppName} [{all_commands}| No Command]");
 
             Console.WriteLine();
-            foreach (var argument in ConsoleArguments.GetCollection())
+            foreach (var argument in ConsoleMethodDefinitions.GetCollection())
             {
-                Console.WriteLine($"{argument.Key}: {argument.Value.Description}");
+
+                ConsoleUtilities.Print($"Command: {argument.Key}: {argument.Value.Description}", ConsoleColor.Green);
+
+                foreach (var arg in argument.Value.ValidArguments)
+                {
+                    Console.WriteLine($"Argument: --{arg.Argument}");
+                }
+
+                foreach (var flag in argument.Value.ValidFlags)
+                {
+                    Console.WriteLine($"Flag: -{flag}");
+                }
+
+                Console.WriteLine();
             }
         }
+
+        /// <summary>
+        /// Generates a info message for the console application.
+        /// </summary>
+        /// <param name="AppVersion"></param>
+        /// <param name="CurrentInstallationDirectory"></param>
+        private void ShowInfo(HashSet<ArgumentValuePair> selected_arguments, HashSet<char> selected_flags)
+        {
+            ConsoleUtilities.Print($"{AppName}", ConsoleColor.Green);
+            Console.WriteLine($"Version: {AppVersion}");
+            Console.WriteLine("Current Directory: " + CurrentInstallationDirectory);
+            Console.WriteLine($"This is a command-line interface for the {AppName} application.");
+            Console.WriteLine("For more information, visit the official documentation.");
+            Environment.Exit(0);
+        }
+
     }
 }

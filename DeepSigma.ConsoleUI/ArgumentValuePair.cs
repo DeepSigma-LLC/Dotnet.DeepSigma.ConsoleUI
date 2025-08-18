@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DeepSigma.ConsoleUI
 {
-    public class ArgumentValuePair
+    public record ArgumentValuePair
     {
         public string Argument { get; set; } 
         public string? Value { get; set; }
