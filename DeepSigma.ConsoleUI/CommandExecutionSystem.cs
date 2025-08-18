@@ -58,7 +58,8 @@ namespace DeepSigma.ConsoleUI
             string? command = argument.Command;
             if (command is null)
             {
-                throw new NotImplementedException("Unhandled exception: No command provided.");
+                ConsoleUtilities.Print("Invalid command. No command was provided.", ConsoleColor.Red);
+                return;
             }
             else if(ConsoleMethodDefinitions.GetCollection().ContainsKey(command) == false)
             {
