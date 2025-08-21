@@ -14,9 +14,9 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// The method to be executed when the console argument is invoked.
         /// </summary>
-        public Action<HashSet<ArgumentValuePair>, HashSet<char>> Method { get; set; }
+        public Action<Dictionary<string, string?>, Dictionary<char, bool>> Method { get; set; }
 
-        private Action<HashSet<ArgumentValuePair>, HashSet<char>> UserDefinedMethod { get; init; }
+        private Action<Dictionary<string, string?>, Dictionary<char, bool>> UserDefinedMethod { get; init; }
 
         /// <summary>
         /// Description of the console argument, which can be used to provide information about what the argument does.
@@ -26,12 +26,12 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// A set of valid arguments that can be used with this console method. Each argument is represented as a name-value pair.
         /// </summary>
-        public HashSet<ArgumentValuePair> ValidArguments { get; set; } = [];
+        internal Dictionary<string, string?> ValidArguments { get; set; } = [];
 
         /// <summary>
         /// A set of valid flags that can be used with this console method. Flags are typically single characters (e.g., '-h' for help).
         /// </summary>
-        public HashSet<char> ValidFlags { get; set; } = [];
+        internal Dictionary<char, bool> ValidFlags { get; set; } = [];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConsoleMethod"/> class.
@@ -40,7 +40,7 @@ namespace DeepSigma.ConsoleUI
         /// <param name="description"></param>
         /// <param name="valid_arguments"></param>
         /// <param name="valid_flags"></param>
-        public ConsoleMethod(Action<HashSet<ArgumentValuePair>, HashSet<char>> action, string description, HashSet<ArgumentValuePair>? valid_arguments = null, HashSet<char>? valid_flags = null)
+        public ConsoleMethod(Action<Dictionary<string, string?>, Dictionary<char, bool>> action, string description, Dictionary<string, string?>? valid_arguments = null, Dictionary<char, bool>? valid_flags = null)
         {
             this.Description = description;
             this.UserDefinedMethod = action;
@@ -62,9 +62,15 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         /// <param name="selected_arguments"></param>
         /// <param name="selected_flags"></param>
-        private void CustomMethodWithArgumentValidation(HashSet<ArgumentValuePair> selected_arguments, HashSet<char> selected_flags)
+        private void CustomMethodWithArgumentValidation(Dictionary<string, string?> selected_arguments, Dictionary<char, bool> selected_flags)
         {
-            ValidateArguments(selected_arguments, selected_flags);
+            bool arguments_are_valid = IsValidArguments(selected_arguments, selected_flags);
+
+            if (arguments_are_valid == false)
+            {
+                ConsoleUtilities.Print("Invalid arguments or flags provided.", ConsoleColor.Red, false);
+                return;
+            }
 
             this.UserDefinedMethod.Invoke(selected_arguments, selected_flags);
         }
@@ -72,27 +78,30 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Validates the provided arguments and flags against the method's valid arguments and flags.
         /// </summary>
-        /// <param name="arguments"></param>
-        /// <param name="flags"></param>
-        /// <exception cref="ArgumentException"></exception>
-        private void ValidateArguments(HashSet<ArgumentValuePair> arguments, HashSet<char> flags)
+        /// <param name="selected_arguments"></param>
+        /// <param name="selected_flags"></param>
+        private bool IsValidArguments(Dictionary<string, string?> selected_arguments, Dictionary<char, bool> selected_flags)
         {
+            bool is_valid = true;
             // Validate the arguments and flags against the method's valid arguments and flags
-            foreach (var arg in arguments)
+            foreach (KeyValuePair<string, string?> arg in selected_arguments)
             {
-                if (!ValidArguments.Contains(arg))
+                if (ValidArguments.ContainsKey(arg.Key) == false)
                 {
-                    throw new ArgumentException($"Invalid argument: {arg.Argument}");
+                    is_valid = false;
+                    ConsoleUtilities.Print($"Invalid argument: {arg.Key}", ConsoleColor.Red, false);
                 }
             }
 
-            foreach (var flag in flags)
+            foreach (KeyValuePair<char, bool> flag in selected_flags)
             {
-                if (!ValidFlags.Contains(flag))
+                if (ValidFlags.ContainsKey(flag.Key) == false)
                 {
-                    throw new ArgumentException($"Invalid flag: {flag}");
+                    is_valid = false;
+                    ConsoleUtilities.Print($"Invalid flag: {flag.Key}", ConsoleColor.DarkRed, false);
                 }
             }
+            return is_valid;
         }
     }
 }

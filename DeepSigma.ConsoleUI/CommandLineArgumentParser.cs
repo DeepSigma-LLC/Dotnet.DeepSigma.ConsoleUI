@@ -68,8 +68,7 @@ namespace DeepSigma.ConsoleUI
                     {
                         targeted_argument_name = past_arguments.ElementAt(past_arguments.Count - 2).TrimStart('-'); // minus 2 becuase -1 to convert to index and -1 to take the prior value
                     }
-                    ArgumentValuePair pair = new(targeted_argument_name, value);
-                    commandArgs.Arguments.Add(pair);
+                    commandArgs.Arguments.Add(targeted_argument_name, value);
                 }
                 else if (value.StartsWith("--") && value.Contains("=")) // Full argument
                 {
@@ -90,7 +89,7 @@ namespace DeepSigma.ConsoleUI
                 }
                 else
                 {
-                    throw new NotSupportedException("Unknown command");
+                    ConsoleUtilities.Print("Unknown command", ConsoleColor.Red);
                 }
 
                 past_arguments.Add(value);
@@ -105,8 +104,7 @@ namespace DeepSigma.ConsoleUI
             {
                 throw new ArgumentException("Unknown argument");
             }
-            ArgumentValuePair pair = new(equals_split[0].TrimStart('-'), equals_split[1]);
-            command.Arguments.Add(pair);
+            command.Arguments.Add(equals_split[0].TrimStart('-'), equals_split[1]);
         }
 
         /// <summary>
@@ -120,16 +118,13 @@ namespace DeepSigma.ConsoleUI
             char[] flags = trimed_value.ToCharArray();
             foreach (char flag in flags)
             {
-                command.Flags.Add(flag);
+                if (command.Flags.ContainsKey(flag) == true)
+                {
+                    ConsoleUtilities.Print($"Flag '{flag}' was already defined.", ConsoleColor.Red);
+                    continue;
+                }
+                command.Flags.Add(flag, true);
             }
-        }
-
-        private enum ArgumentType
-        {
-            QuotedText,
-            Flag,
-            ArgumentName,
-            ArgumentValue
         }
 
         /// <summary>
@@ -137,7 +132,7 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         /// <param name="all_arguments"></param>
         /// <param name="known_commands"></param>
-        /// <returns></returns>
+        /// <returns>Dictionary containing commands as keys and the arguments as an array of strings.</returns>
         private static Dictionary<string, string[]> GetCommands(string[] all_arguments, string[] known_commands)
         {
             Dictionary<string, string[]> command_dict = [];

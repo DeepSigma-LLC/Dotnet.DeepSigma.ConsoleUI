@@ -19,16 +19,31 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Represents a set of arguments that can be used with the command. Each argument is represented as a name-value pair.
         /// </summary>
-        public HashSet<ArgumentValuePair> Arguments { get; set; } = [];
+        public Dictionary<string, string?> Arguments { get; init; } = [];
 
         /// <summary>
         /// Represents a set of flags that can be used with the command. Flags are typically single characters (e.g., '-h' for help).
         /// </summary>
-        public HashSet<char> Flags { get; set; } = [];
+        public Dictionary<char, bool> Flags { get; init; } = [];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConsoleCommand"/> class.
         /// </summary>
-        public ConsoleCommand(){}
+        public ConsoleCommand(string? Command, Dictionary<string, string?>? Arguments = null, HashSet<char>? Flags = null)
+        {
+            this.Command = Command?.Trim().ToLower();
+            this.Arguments = Arguments ?? [];
+            this.Flags = Flags?.ToDictionary(flag => flag, flag => true) ?? [];
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ConsoleCommand"/> class.
+        /// </summary>
+        public ConsoleCommand()
+        {
+            
+        }
+
+
     }
 }

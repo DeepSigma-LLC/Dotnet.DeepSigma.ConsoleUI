@@ -27,10 +27,10 @@ namespace DeepSigma.ConsoleUI
         /// <exception cref="ArgumentNullException"></exception>
         public CommandExecutionSystem(ConsoleMethodCollection console_method_definitions, string app_name, string app_version, string current_installation_directory)
         {
-            this.ConsoleMethodDefinitions = console_method_definitions ?? throw new ArgumentNullException(nameof(console_method_definitions), "Console method definitions cannot be null.");
             this.AppName = AppName;
             this.AppVersion = AppVersion;
             this.CurrentInstallationDirectory = CurrentInstallationDirectory;
+            this.ConsoleMethodDefinitions = console_method_definitions ?? throw new ArgumentNullException(nameof(console_method_definitions), "Console method definitions cannot be null.");
             AddArguments();
         }
 
@@ -46,6 +46,7 @@ namespace DeepSigma.ConsoleUI
             foreach (ConsoleCommand command in commands)
             {
                 InvokeCLIArgument(command);
+                Console.WriteLine();
             }
         }
 
@@ -56,7 +57,7 @@ namespace DeepSigma.ConsoleUI
         private void InvokeCLIArgument(ConsoleCommand argument)
         {
             string? command = argument.Command;
-            if (command is null)
+            if (string.IsNullOrEmpty(command))
             {
                 ConsoleUtilities.Print("Invalid command. No command was provided.", ConsoleColor.Red);
                 return;
@@ -71,42 +72,32 @@ namespace DeepSigma.ConsoleUI
             ConsoleMethodDefinitions.GetCollection()[command].Method.Invoke(argument.Arguments, argument.Flags);
         }
 
-        /// <summary>
-        /// Adds a help argument to the console arguments collection.
-        /// </summary>
-        private void AddArguments()
-        {
-            ConsoleMethodDefinitions.Add("help", new ConsoleMethod(ShowHelp, "Shows all available arguments."));
-            ConsoleMethodDefinitions.Add("info", new ConsoleMethod(ShowInfo, "Shows app information."));
-        }
 
         /// <summary>
         /// Displays help information for the console application, including available commands, arguments, and flags.
         /// </summary>
         /// <param name="arguments"></param>
         /// <param name="flags"></param>
-        private void ShowHelp(HashSet<ArgumentValuePair> arguments, HashSet<char> flags)
+        private void ShowHelp(Dictionary<string, string?> arguments, Dictionary<char, bool> flags)
         {
             string all_commands = string.Join(" | ", ConsoleMethodDefinitions.GetCollection().Keys);
             Console.WriteLine($"Usage: {AppName} [{all_commands}| No Command]");
 
             Console.WriteLine();
-            foreach (var argument in ConsoleMethodDefinitions.GetCollection())
+            foreach (KeyValuePair<string, ConsoleMethod> argument in ConsoleMethodDefinitions.GetCollection())
             {
 
-                ConsoleUtilities.Print($"Command: {argument.Key}: {argument.Value.Description}", ConsoleColor.Green);
+                ConsoleUtilities.Print($"Command: {argument.Key}: {argument.Value.Description}", ConsoleColor.Green, false);
 
-                foreach (var arg in argument.Value.ValidArguments)
+                foreach (KeyValuePair<string, string?> arg in argument.Value.ValidArguments)
                 {
-                    Console.WriteLine($"Argument: --{arg.Argument}");
+                    Console.Write($"Argument: --{arg.Key}");
                 }
 
-                foreach (var flag in argument.Value.ValidFlags)
+                foreach (KeyValuePair<char, bool>  flag in argument.Value.ValidFlags)
                 {
-                    Console.WriteLine($"Flag: -{flag}");
+                    Console.Write($"Flag: -{flag.Key}");
                 }
-
-                Console.WriteLine();
             }
         }
 
@@ -115,15 +106,33 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         /// <param name="selected_arguments"></param>
         /// <param name="selected_flags"></param>
-        private void ShowInfo(HashSet<ArgumentValuePair> selected_arguments, HashSet<char> selected_flags)
+        private void ShowInfo(Dictionary<string, string?> selected_arguments, Dictionary<char, bool> selected_flags)
         {
             ConsoleUtilities.Print($"{AppName}", ConsoleColor.Green);
             Console.WriteLine($"Version: {AppVersion}");
             Console.WriteLine("Current Directory: " + CurrentInstallationDirectory);
             Console.WriteLine($"This is a command-line interface for the {AppName} application.");
             Console.WriteLine("For more information, visit the official documentation.");
+        }
+
+        /// <summary>
+        /// Exits the application.
+        /// </summary>
+        /// <param name="selected_arguments"></param>
+        /// <param name="selected_flags"></param>
+        private void Exit(Dictionary<string, string?> selected_arguments, Dictionary<char, bool> selected_flags)
+        {
             Environment.Exit(0);
         }
 
+        /// <summary>
+        /// Adds a help argument to the console arguments collection.
+        /// </summary>
+        private void AddArguments()
+        {
+            ConsoleMethodDefinitions.Add("help", new ConsoleMethod(ShowHelp, "Shows all available arguments."));
+            ConsoleMethodDefinitions.Add("info", new ConsoleMethod(ShowInfo, "Shows app information."));
+            ConsoleMethodDefinitions.Add("exit", new ConsoleMethod(Exit, "Exit the application."));
+        }
     }
 }
