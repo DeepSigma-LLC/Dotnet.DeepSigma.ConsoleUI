@@ -42,7 +42,7 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Retrieves a console argument by its name.
         /// </summary>
-        /// <param name="command></param>
+        /// <param name="command"></param>
         /// <exception cref="ArgumentException"></exception>
         private void ValidateCommandName(string command)
         {
