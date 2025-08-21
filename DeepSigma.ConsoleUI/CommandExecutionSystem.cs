@@ -21,11 +21,11 @@ namespace DeepSigma.ConsoleUI
         /// Initializes a new instance of the <see cref="CommandExecutionSystem"/> class with the specified console method definitions and application details.
         /// </summary>
         /// <param name="console_method_definitions"></param>
-        /// <param name="AppName"></param>
-        /// <param name="AppVersion"></param>
-        /// <param name="CurrentInstallationDirectory"></param>
+        /// <param name="app_name"></param>
+        /// <param name="app_version"></param>
+        /// <param name="current_installation_directory"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public CommandExecutionSystem(ConsoleMethodCollection console_method_definitions, string AppName, string AppVersion, string CurrentInstallationDirectory)
+        public CommandExecutionSystem(ConsoleMethodCollection console_method_definitions, string app_name, string app_version, string current_installation_directory)
         {
             this.ConsoleMethodDefinitions = console_method_definitions ?? throw new ArgumentNullException(nameof(console_method_definitions), "Console method definitions cannot be null.");
             this.AppName = AppName;
@@ -50,9 +50,9 @@ namespace DeepSigma.ConsoleUI
         }
 
         /// <summary>
-        /// Processes the command-line interface request based on the provided argument.
+        /// Invokes the specified console command with its arguments and flags.
         /// </summary>
-        /// <param name="CLIarguement"></param>
+        /// <param name="argument"></param>
         private void InvokeCLIArgument(ConsoleCommand argument)
         {
             string? command = argument.Command;
@@ -81,9 +81,10 @@ namespace DeepSigma.ConsoleUI
         }
 
         /// <summary>
-        /// Generates a help message for the console application.
+        /// Displays help information for the console application, including available commands, arguments, and flags.
         /// </summary>
-        /// <param name="AppName"></param>
+        /// <param name="arguments"></param>
+        /// <param name="flags"></param>
         private void ShowHelp(HashSet<ArgumentValuePair> arguments, HashSet<char> flags)
         {
             string all_commands = string.Join(" | ", ConsoleMethodDefinitions.GetCollection().Keys);
@@ -110,10 +111,10 @@ namespace DeepSigma.ConsoleUI
         }
 
         /// <summary>
-        /// Generates a info message for the console application.
+        /// Displays information about the application, including its name, version, and current installation directory.
         /// </summary>
-        /// <param name="AppVersion"></param>
-        /// <param name="CurrentInstallationDirectory"></param>
+        /// <param name="selected_arguments"></param>
+        /// <param name="selected_flags"></param>
         private void ShowInfo(HashSet<ArgumentValuePair> selected_arguments, HashSet<char> selected_flags)
         {
             ConsoleUtilities.Print($"{AppName}", ConsoleColor.Green);

@@ -4,6 +4,16 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>DeepSigma.ConsoleUI</Title>
+    <Version>1.0.0.0</Version>
+    <Authors>DeepSigma LLC</Authors>
+    <Description>C# library for Console UI utilities.</Description>
+    <PackageProjectUrl>https://github.com/DeepSigma-LLC/Dotnet.DeepSigma.ConsoleUI.git</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DeepSigma-LLC/Dotnet.DeepSigma.ConsoleUI.git</RepositoryUrl>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
 </Project>

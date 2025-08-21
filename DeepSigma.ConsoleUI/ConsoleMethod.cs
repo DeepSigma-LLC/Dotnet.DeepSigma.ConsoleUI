@@ -23,7 +23,14 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         public string Description { get; set; } = String.Empty;
 
+        /// <summary>
+        /// A set of valid arguments that can be used with this console method. Each argument is represented as a name-value pair.
+        /// </summary>
         public HashSet<ArgumentValuePair> ValidArguments { get; set; } = [];
+
+        /// <summary>
+        /// A set of valid flags that can be used with this console method. Flags are typically single characters (e.g., '-h' for help).
+        /// </summary>
         public HashSet<char> ValidFlags { get; set; } = [];
 
         /// <summary>

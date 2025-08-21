@@ -16,12 +16,13 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Processes the command-line arguments and organizes them into a structured format.
         /// </summary>
-        /// <param name="arguments"></param>
+        /// <param name="all_arguments"></param>
+        /// <param name="known_commands"></param>
         /// <returns></returns>
-        public static List<ConsoleCommand> ProcessArguments(string[] arguments, string[] known_commands)
+        public static List<ConsoleCommand> ProcessArguments(string[] all_arguments, string[] known_commands)
         {
             List<ConsoleCommand> commands = [];
-            string[] joinedArguments = JoinQuotedArgs(arguments);
+            string[] joinedArguments = JoinQuotedArgs(all_arguments);
             Dictionary<string, string[]> command_collection = GetCommands(joinedArguments, known_commands);
 
             foreach(KeyValuePair<string, string[]> command_values in command_collection)
@@ -40,18 +41,19 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Parses a single console command from the provided arguments, extracting flags and argument values.
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="all_arguments"></param>
+        /// <param name="known_commands"></param>
         /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        private static ConsoleCommand ParseSingleConsoleCommand(string[] args, string[] known_commands)
+        /// <exception cref="NotSupportedException">Exception will be thrown if a command is not found in the known commands.</exception>
+        private static ConsoleCommand ParseSingleConsoleCommand(string[] all_arguments, string[] known_commands)
         {
             ArgumentType? lastArgumentType = null;
             List<string> past_arguments = [];
             ConsoleCommand commandArgs = new();
 
-            for (int i = 0; i < args.Length; i++)
+            for (int i = 0; i < all_arguments.Length; i++)
             {
-                string value = args[i].Trim();
+                string value = all_arguments[i].Trim();
 
                 if (lastArgumentType == ArgumentType.ArgumentName && value == "=") // Argument Value 
                 {
@@ -96,7 +98,7 @@ namespace DeepSigma.ConsoleUI
             return commandArgs;
         }
 
-        private static void SaveFullArgumentValue(ConsoleCommand commandArgs, string value)
+        private static void SaveFullArgumentValue(ConsoleCommand command, string value)
         {
             string[] equals_split = value.Split("=");
             if (equals_split.Count() >= 3)
@@ -104,21 +106,21 @@ namespace DeepSigma.ConsoleUI
                 throw new ArgumentException("Unknown argument");
             }
             ArgumentValuePair pair = new(equals_split[0].TrimStart('-'), equals_split[1]);
-            commandArgs.Arguments.Add(pair);
+            command.Arguments.Add(pair);
         }
 
         /// <summary>
         /// Saves flags from the command-line arguments into the ConsoleCommandArgs object.
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="command"></param>
         /// <param name="value"></param>
-        private static void SaveFlags(ConsoleCommand args, string value)
+        private static void SaveFlags(ConsoleCommand command, string value)
         {
             string trimed_value = value.TrimStart('-');
             char[] flags = trimed_value.ToCharArray();
             foreach (char flag in flags)
             {
-                args.Flags.Add(flag);
+                command.Flags.Add(flag);
             }
         }
 
@@ -133,18 +135,18 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Processes the command-line arguments and organizes them into a dictionary of commands and their associated arguments.
         /// </summary>
-        /// <param name="arguments"></param>
-        /// <param name="commands"></param>
+        /// <param name="all_arguments"></param>
+        /// <param name="known_commands"></param>
         /// <returns></returns>
-        private static Dictionary<string, string[]> GetCommands(string[] arguments, string[] known_commands)
+        private static Dictionary<string, string[]> GetCommands(string[] all_arguments, string[] known_commands)
         {
             Dictionary<string, string[]> command_dict = [];
-            List<int> command_indexes = GetCommandIndexes(arguments, known_commands);
+            List<int> command_indexes = GetCommandIndexes(all_arguments, known_commands);
 
             // If no commands are found, add the default command with all arguments
             if (command_indexes.Count == 0)
             {
-                command_dict.Add(null_command, arguments);
+                command_dict.Add(null_command, all_arguments);
                 return command_dict;
             }
 
@@ -155,27 +157,24 @@ namespace DeepSigma.ConsoleUI
                 // If the first command is not at index 0, we need to store the initial arguments
                 if (iteration == 0 && command_index != 0)
                 {
-                    int total_initial_arguments = command_index + 1;
-                    command_dict.Add(null_command, arguments.Take(total_initial_arguments).ToArray());
+                    command_dict.Add(null_command, all_arguments.Take(command_index).ToArray());
+                }
+
+                if (command_index == command_indexes.Last())
+                {
+                    // If this is the last command, take all remaining arguments
+                    command_dict.Add(all_arguments[command_index], all_arguments.Skip(command_index).ToArray());
                 }
                 else
                 {
-                    if (command_index == command_indexes.Last())
-                    {
-                        // If this is the last command, take all remaining arguments
-                        command_dict.Add(arguments[command_index], arguments.Skip(command_index).ToArray());
-                    }
-                    else
-                    {
-                        // If there is a next command, take arguments until the next command index
-                        string command = arguments[command_index];
+                    // If there is a next command, take arguments until the next command index
+                    string command = all_arguments[command_index];
 
-                        int next_command_index = command_indexes[iteration + 1];
-                        int aruments_to_take = next_command_index - command_index;
-                        
-                        string[] arguments_to_add = arguments.Skip(command_index).Take(aruments_to_take).ToArray();
-                        command_dict.Add(command, arguments_to_add);
-                    }
+                    int next_command_index = command_indexes[iteration + 1];
+                    int aruments_to_take = next_command_index - command_index;
+
+                    string[] arguments_to_add = all_arguments.Skip(command_index).Take(aruments_to_take).ToArray();
+                    command_dict.Add(command, arguments_to_add);
                 }
                 iteration++;
             }
@@ -186,16 +185,16 @@ namespace DeepSigma.ConsoleUI
         /// <summary>
         /// Returns a list of indexes where the specified commands are found in the arguments.
         /// </summary>
-        /// <param name="arguments"></param>
-        /// <param name="commands"></param>
+        /// <param name="all_arguments"></param>
+        /// <param name="known_commands"></param>
         /// <returns></returns>
-        private static List<int> GetCommandIndexes(string[] arguments, string[] commands)
+        private static List<int> GetCommandIndexes(string[] all_arguments, string[] known_commands)
         {
             List<int> command_indexes = [];
-            for (int i = 0; i < arguments.Length; i++)
+            for (int i = 0; i < all_arguments.Length; i++)
             {
-                string arg = arguments[i].Trim().ToLower();
-                if (commands.Contains(arg) == true)
+                string arg = all_arguments[i].Trim().ToLower();
+                if (known_commands.Contains(arg) == true)
                 {
                     command_indexes.Add(i);
                 }
