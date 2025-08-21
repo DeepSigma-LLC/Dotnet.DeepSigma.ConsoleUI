@@ -18,22 +18,23 @@ namespace DeepSigma.ConsoleUI
         /// </summary>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        public static IEnumerable<ConsoleCommand> ProcessArguments(string[] arguments, string[] commands)
+        public static List<ConsoleCommand> ProcessArguments(string[] arguments, string[] known_commands)
         {
+            List<ConsoleCommand> commands = [];
             string[] joinedArguments = JoinQuotedArgs(arguments);
-            Dictionary<string, string[]> command_collection = GetCommands(joinedArguments, commands);
-            List<ConsoleCommand> consoleCommands = [];
+            Dictionary<string, string[]> command_collection = GetCommands(joinedArguments, known_commands);
 
             foreach(KeyValuePair<string, string[]> command_values in command_collection)
             {
                 (string command, string[] argument_values) = (command_values.Key, command_values.Value);
-                ConsoleCommand commandArgs = ParseSingleConsoleCommand(argument_values);
+                ConsoleCommand commandArgs = ParseSingleConsoleCommand(argument_values, known_commands);
                 if (command == null_command)
                 {
                     commandArgs.Command = null;
                 }
-                yield return commandArgs;
+                commands.Add(commandArgs);
             }
+            return commands;
         }
 
         /// <summary>
@@ -42,7 +43,7 @@ namespace DeepSigma.ConsoleUI
         /// <param name="args"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static ConsoleCommand ParseSingleConsoleCommand(string[] args)
+        private static ConsoleCommand ParseSingleConsoleCommand(string[] args, string[] known_commands)
         {
             ArgumentType? lastArgumentType = null;
             List<string> past_arguments = [];
@@ -52,13 +53,27 @@ namespace DeepSigma.ConsoleUI
             {
                 string value = args[i].Trim();
 
-                if (lastArgumentType == ArgumentType.ArgumentName) // Argument Value 
+                if (lastArgumentType == ArgumentType.ArgumentName && value == "=") // Argument Value 
+                {
+                    // Do nothing
+                }
+                else if(lastArgumentType == ArgumentType.ArgumentName) // Stand alone argument value
                 {
                     lastArgumentType = ArgumentType.ArgumentValue;
-                    string trimed_value = past_arguments.Last().TrimStart('-');
-                    ArgumentValuePair pair = new(trimed_value, value);
+
+                    string targeted_argument_name = past_arguments.Last().TrimStart('-');
+                    if (past_arguments.Last() == "=")
+                    {
+                        targeted_argument_name = past_arguments.ElementAt(past_arguments.Count - 2).TrimStart('-'); // minus 2 becuase -1 to convert to index and -1 to take the prior value
+                    }
+                    ArgumentValuePair pair = new(targeted_argument_name, value);
+                    commandArgs.Arguments.Add(pair);
                 }
-                else if (value.StartsWith("--")) // Argument Name
+                else if (value.StartsWith("--") && value.Contains("=")) // Full argument
+                {
+                    SaveFullArgumentValue(commandArgs, value);
+                }
+                else if (value.StartsWith("--") && value.Contains("=") == false) //Argument key
                 {
                     lastArgumentType = ArgumentType.ArgumentName;
                 }
@@ -67,14 +82,29 @@ namespace DeepSigma.ConsoleUI
                     lastArgumentType = ArgumentType.Flag;
                     SaveFlags(commandArgs, value);
                 }
-                else //Command
+                else if (known_commands.Contains(value)) //Command
                 {
-                    throw new Exception("Unknown command.");
+                    commandArgs.Command = value;
+                }
+                else
+                {
+                    throw new NotSupportedException("Unknown command");
                 }
 
                 past_arguments.Add(value);
             }
             return commandArgs;
+        }
+
+        private static void SaveFullArgumentValue(ConsoleCommand commandArgs, string value)
+        {
+            string[] equals_split = value.Split("=");
+            if (equals_split.Count() >= 3)
+            {
+                throw new ArgumentException("Unknown argument");
+            }
+            ArgumentValuePair pair = new(equals_split[0].TrimStart('-'), equals_split[1]);
+            commandArgs.Arguments.Add(pair);
         }
 
         /// <summary>
@@ -106,10 +136,10 @@ namespace DeepSigma.ConsoleUI
         /// <param name="arguments"></param>
         /// <param name="commands"></param>
         /// <returns></returns>
-        private static Dictionary<string, string[]> GetCommands(string[] arguments, string[] commands)
+        private static Dictionary<string, string[]> GetCommands(string[] arguments, string[] known_commands)
         {
             Dictionary<string, string[]> command_dict = [];
-            List<int> command_indexes = GetCommandIndexes(arguments, commands);
+            List<int> command_indexes = GetCommandIndexes(arguments, known_commands);
 
             // If no commands are found, add the default command with all arguments
             if (command_indexes.Count == 0)
@@ -118,41 +148,36 @@ namespace DeepSigma.ConsoleUI
                 return command_dict;
             }
 
+            int iteration = 0;
             // If commands are found, process them
-            for (int c = 0; c < command_indexes.Count; c++)
+            foreach (int command_index in command_indexes)
             {
-                int command_index = command_indexes[c];
-
                 // If the first command is not at index 0, we need to store the initial arguments
-                if (c == 0 && command_index != 0)
+                if (iteration == 0 && command_index != 0)
                 {
                     int total_initial_arguments = command_index + 1;
                     command_dict.Add(null_command, arguments.Take(total_initial_arguments).ToArray());
                 }
                 else
                 {
-                    int c_next = c + 1;
-
-                    if (c_next >= command_indexes.Count)
+                    if (command_index == command_indexes.Last())
                     {
                         // If this is the last command, take all remaining arguments
-                        command_dict.Add(commands[command_index], arguments.Skip(command_index).ToArray());
+                        command_dict.Add(arguments[command_index], arguments.Skip(command_index).ToArray());
                     }
                     else
                     {
                         // If there is a next command, take arguments until the next command index
-                        int next_command_index = arguments.Count() - 1;
+                        string command = arguments[command_index];
 
-                        if(c_next <= command_indexes.Count - 1)
-                        {
-                            next_command_index = command_indexes[c_next];
-                        }
-
-                        int arguments_to_skip = command_index + 1;
-                        int aruments_to_take = next_command_index - arguments_to_skip;
-                        command_dict.Add(commands[command_index], arguments.Skip(arguments_to_skip).Take(aruments_to_take).ToArray());
+                        int next_command_index = command_indexes[iteration + 1];
+                        int aruments_to_take = next_command_index - command_index;
+                        
+                        string[] arguments_to_add = arguments.Skip(command_index).Take(aruments_to_take).ToArray();
+                        command_dict.Add(command, arguments_to_add);
                     }
                 }
+                iteration++;
             }
             return command_dict;
         }
@@ -194,26 +219,27 @@ namespace DeepSigma.ConsoleUI
                 if (inQuotes == false)
                 {
                     // Look for opening quote
-                    if (arg.StartsWith("\"") == true && arg.EndsWith("\"") == false)
+                    if (arg.Contains("\"") == true)
                     {
                         inQuotes = true;
                         current.Append(arg);
+                        continue;
                     }
                     else
                     {
                         results.Add(arg);
+                        continue;
                     }
                 }
-                else
+
+                // Accumulate arguments until closing quote is found
+                current.Append(" ").Append(arg);
+                if (arg.EndsWith("\""))
                 {
-                    // Accumulate arguments until closing quote is found
-                    current.Append(" ").Append(arg);
-                    if (arg.EndsWith("\""))
-                    {
-                        results.Add(current.ToString().Replace("\"", string.Empty));
-                        current.Clear();
-                        inQuotes = false;
-                    }
+                    string result = current.ToString().Replace("\"", string.Empty);
+                    results.Add(result);
+                    current.Clear();
+                    inQuotes = false;
                 }
             }
 
