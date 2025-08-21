@@ -87,16 +87,16 @@ namespace DeepSigma.ConsoleUI
             foreach (KeyValuePair<string, ConsoleMethod> argument in ConsoleMethodDefinitions.GetCollection())
             {
 
-                ConsoleUtilities.Print($"Command: {argument.Key}: {argument.Value.Description}", ConsoleColor.Green, false);
+                ConsoleUtilities.Print($"Command: {argument.Key}: {argument.Value.Description}", ConsoleColor.Green);
 
                 foreach (KeyValuePair<string, string?> arg in argument.Value.ValidArguments)
                 {
-                    Console.Write($"Argument: --{arg.Key}");
+                    ConsoleUtilities.Print($"Argument: --{arg.Key}");
                 }
 
                 foreach (KeyValuePair<char, bool>  flag in argument.Value.ValidFlags)
                 {
-                    Console.Write($"Flag: -{flag.Key}");
+                    ConsoleUtilities.Print($"Flag: -{flag.Key}");
                 }
             }
         }
