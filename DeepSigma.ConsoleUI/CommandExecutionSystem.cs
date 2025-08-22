@@ -27,9 +27,9 @@ namespace DeepSigma.ConsoleUI
         /// <exception cref="ArgumentNullException"></exception>
         public CommandExecutionSystem(ConsoleMethodCollection console_method_definitions, string app_name, string app_version, string current_installation_directory)
         {
-            this.AppName = AppName;
-            this.AppVersion = AppVersion;
-            this.CurrentInstallationDirectory = CurrentInstallationDirectory;
+            this.AppName = app_name;
+            this.AppVersion = app_version;
+            this.CurrentInstallationDirectory = current_installation_directory;
             this.ConsoleMethodDefinitions = console_method_definitions ?? throw new ArgumentNullException(nameof(console_method_definitions), "Console method definitions cannot be null.");
             AddArguments();
         }
