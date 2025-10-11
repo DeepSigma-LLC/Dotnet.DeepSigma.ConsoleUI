@@ -9,6 +9,10 @@
   <ItemGroup>
     <Content Remove="C:\Users\brend\.nuget\packages\deepsigma.unittest\1.0.0.1\contentFiles\any\net9.0\testhost.dll" />
     <Content Remove="C:\Users\brend\.nuget\packages\deepsigma.unittest\1.0.0.1\contentFiles\any\net9.0\testhost.exe" />
+    <Content Remove="C:\Users\brend\.nuget\packages\deepsigma.unittest\1.0.1\contentFiles\any\net10.0\testhost.dll" />
+    <Content Remove="C:\Users\brend\.nuget\packages\deepsigma.unittest\1.0.1\contentFiles\any\net10.0\testhost.exe" />
+    <Content Remove="C:\Users\brend\.nuget\packages\microsoft.testplatform.testhost\18.0.0\build\net8.0\x64\testhost.dll" />
+    <Content Remove="C:\Users\brend\.nuget\packages\microsoft.testplatform.testhost\18.0.0\build\net8.0\x64\testhost.exe" />
   </ItemGroup>
 
   <ItemGroup>

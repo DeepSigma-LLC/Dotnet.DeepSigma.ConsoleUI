@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+namespace DeepSigma.ConsoleUI;
 
-namespace DeepSigma.ConsoleUI
+internal enum ArgumentType
 {
-    internal enum ArgumentType
-    {
-        QuotedText,
-        Flag,
-        ArgumentName,
-        ArgumentValue
-    }
-
+    QuotedText,
+    Flag,
+    ArgumentName,
+    ArgumentValue
 }
